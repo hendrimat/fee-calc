@@ -7,4 +7,88 @@ servers:
   - url: http://localhost:8080/
     description: Local development server
 paths:
-  
+  /calculate-delivery-fee:
+    post:
+      operationId: calculateFee
+      summary: Calculates fee based on input parameters.
+      description: Calculates the total delivery fee or gives an error message.
+      parameters:
+        - $ref: '#/components/parameters/City'
+        - $ref: '#/components/parameters/VehicleType'
+      requestBody:
+        description: Request information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryRequest'
+      responses:
+        '200':
+          description: Successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fee'
+
+components:
+  schemas:
+    DeliveryRequest:
+      type: object
+      properties:
+        city:
+          $ref: '#/components/schemas/City'
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        weather:
+          $ref: '#/components/schemas/Weather'
+
+    Fee:
+      type: object
+      properties:
+        fee:
+          type: number
+        updatedOn:
+          type: string
+          format: date-time
+
+    City:
+      type: string
+      enum:
+        - Tallinn
+        - Tartu
+        - Pärnu
+
+    VehicleType:
+      type: string
+      enum:
+        - Car
+        - Scooter
+        - Bike
+
+    Weather:
+      type: object
+      properties:
+        id:
+          type: integer
+        airTemperature:
+          type: number
+        windSpeed:
+          type: number
+        weatherPhenomenon:
+          type: string
+
+  parameters:
+    City:
+      name: city
+      in: query
+      description: City for fee calculation
+      required: true
+      schema:
+        type: string
+    VehicleType:
+      name: vehicleType
+      in: query
+      description: Vehicle type for fee calculation
+      required: true
+      schema:
+        type: string
