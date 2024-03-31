@@ -48,7 +48,7 @@ class FeeCalcControllerTest {
         when(calculatorService.calculateFee(parsedVehicleType, parsedCity, weather)).thenReturn(expectedFee);
 
         // Act
-        ResponseEntity<Object> responseEntity = feeCalcController.calculateDeliveryFee(city, vehicleType);
+        ResponseEntity<Object> responseEntity = feeCalcController.calculateDeliveryFee(city, vehicleType, null);
 
         // Assert
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -72,7 +72,7 @@ class FeeCalcControllerTest {
                 .thenThrow(new ForbiddenVehicleTypeException(expectedErrorMessage));
 
         // Act
-        ResponseEntity<Object> responseEntity = feeCalcController.calculateDeliveryFee(city, vehicleType);
+        ResponseEntity<Object> responseEntity = feeCalcController.calculateDeliveryFee(city, vehicleType, null);
 
         // Assert
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

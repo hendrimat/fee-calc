@@ -9,12 +9,15 @@ import com.fujitsu.trial.feecalc.service.CalculatorService;
 import com.fujitsu.trial.feecalc.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.OffsetDateTime;
 
 @Slf4j
 @RestController
@@ -33,15 +36,19 @@ public class FeeCalcController {
      * @throws ResponseStatusException if an error occurs while calculating the delivery fee.
      */
     @PostMapping("/calculate-delivery-fee")
-    public ResponseEntity<Object> calculateDeliveryFee(@RequestParam String city, @RequestParam String vehicleType) {
-        log.debug("Received request to calculate delivery fee for city '{}' and vehicle type '{}'", city, vehicleType);
+    public ResponseEntity<Object> calculateDeliveryFee(
+            @RequestParam String city,
+            @RequestParam String vehicleType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime dateTime
+    ) {
+        log.debug("Received request to calculate delivery fee for city '{}', vehicle type '{}', and datetime '{}'", city, vehicleType, dateTime);
 
         try {
             City parsedCity = City.valueOf(city.toUpperCase());
             VehicleType parsedVehicleType = VehicleType.valueOf(vehicleType.toUpperCase());
             log.debug("Parsed city: '{}', Parsed vehicle type: '{}'", parsedCity, parsedVehicleType);
 
-            Weather weather = weatherService.getWeather(parsedCity);
+            Weather weather = (dateTime != null) ? weatherService.getWeather(parsedCity, dateTime) : weatherService.getWeather(parsedCity);
             log.debug("Retrieved weather information: '{}'", weather);
 
             Double fee;
@@ -54,7 +61,7 @@ public class FeeCalcController {
             log.debug("Calculated delivery fee: {}", fee);
 
             return ResponseEntity.ok(new FeeResponse(fee));
-        } catch (IllegalArgumentException exception) {
+        } catch (RuntimeException exception) {
             log.error("Error calculating delivery fee", exception);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error calculating delivery fee", exception);
         }

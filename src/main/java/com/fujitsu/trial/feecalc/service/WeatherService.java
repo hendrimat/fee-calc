@@ -1,5 +1,6 @@
 package com.fujitsu.trial.feecalc.service;
 
+import com.fujitsu.trial.feecalc.exception.MissingWeatherException;
 import com.fujitsu.trial.feecalc.logic.WeatherDataFetcher;
 import com.fujitsu.trial.feecalc.model.City;
 import com.fujitsu.trial.feecalc.model.Phenomenon;
@@ -34,8 +35,6 @@ public class WeatherService {
     private final WeatherRepository weatherRepository;
     private final Map<City, String> cityToStation = Map.of(City.TALLINN, "Tallinn-Harku", City.TARTU, "Tartu-Tõravere", City.PÄRNU, "Pärnu");
 
-    @Value("${custom.cron.expression}")
-
     /**
      * Retrieves the most recent weather data from the database for the specified city.
      *
@@ -44,8 +43,24 @@ public class WeatherService {
      */
     public Weather getWeather(City city) {
         String station = cityToStation.get(city);
-        return weatherRepository.findFirstByStationOrderByTimestampDesc(station);
+        return weatherRepository.findFirstByStationOrderByTimestampDesc(station)
+                .orElseThrow(MissingWeatherException::new);
     }
+
+
+    /**
+     * Retrieves the most recent weather data from the database for the specified city before the specified time up to 15 minutes.
+     *
+     * @param city     The city for which weather data is to be retrieved.
+     * @param dateTime The time for which weather data is to be retrieved.
+     * @return The most recent weather data for the specified city before the given time.
+     */
+    public Weather getWeather(City city, OffsetDateTime dateTime) {
+        String station = cityToStation.get(city);
+        return weatherRepository.findMostRecentBeforeTimestamp(station, dateTime.minusMinutes(15), dateTime)
+                .orElseThrow(MissingWeatherException::new);
+    }
+
 
     /**
      * Imports weather data from ilmateenistus.ee and saves it to the database.
@@ -53,6 +68,7 @@ public class WeatherService {
      * It fetches weather data using the {@link WeatherDataFetcher} and saves it to the
      * database using the {@link WeatherRepository}.
      */
+    @Value("${custom.cron.expression}")
     @Scheduled(cron = "${custom.cron.expression}") // DEFAULT: Runs every hour at HH:15:00
     public void importWeatherData() {
         Collection<String> stations = cityToStation.values();

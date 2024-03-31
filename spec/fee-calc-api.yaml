@@ -12,9 +12,11 @@ paths:
       operationId: calculateFee
       summary: Calculate delivery fee
       description: Calculates the total delivery fee or gives an error message based on the city, vehicle type and weather.
+        Optional time parameter can be used to specify the weather at a specific time.
       parameters:
         - $ref: '#/components/parameters/City'
         - $ref: '#/components/parameters/VehicleType'
+        - $ref: '#/components/parameters/DateTime'
       responses:
         '200':
           description: Successful operation. Total delivery fee or error message.
@@ -64,3 +66,11 @@ components:
           - Car
           - Scooter
           - Bike
+    DateTime:
+      name: time
+      in: query
+      description: Optional parameter to specify the time before which to use weather data. ISO 8601.
+      required: false
+      schema:
+        type: string
+        format: date-time
