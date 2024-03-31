@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -33,6 +36,12 @@ public class WeatherService {
 
     @Value("${custom.cron.expression}")
 
+    /**
+     * Retrieves the most recent weather data from the database for the specified city.
+     *
+     * @param city The city for which weather data is to be retrieved.
+     * @return The most recent weather data for the specified city.
+     */
     public Weather getWeather(City city) {
         String station = cityToStation.get(city);
         return weatherRepository.findFirstByStationOrderByTimestampDesc(station);
@@ -48,9 +57,17 @@ public class WeatherService {
     public void importWeatherData() {
         Collection<String> stations = cityToStation.values();
 
-        Document weatherData = dataFetcher.fetchData();
-        if (weatherData == null) return;
-        String data = weatherData.getDocumentElement().getTextContent();
+        Document weatherData;
+        try {
+            weatherData = dataFetcher.fetchData();
+            if (weatherData == null) {
+                log.error("Error occurred while importing weather data: weather data is empty");
+                return;
+            }
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            log.error("Error occurred while importing weather data: {}", e.getMessage());
+            return;
+        }
 
         Element observations = (Element) weatherData.getElementsByTagName("observations").item(0);
         String timestamp = observations.getAttribute("timestamp");
@@ -75,10 +92,20 @@ public class WeatherService {
             if (!windSpeed.isBlank()) weather.setWindSpeed(Double.parseDouble(windSpeed));
             if (!phenomenon.isBlank()) weather.setPhenomenon(Phenomenon.valueOf(phenomenon.toUpperCase()));
 
-            weatherRepository.save(weather);
+            try {
+                weatherRepository.save(weather);
+                log.debug("Saved weather data for station {}: {}", name, weather);
+            } catch (DataAccessException e) {
+                log.error("Error saving weather data for station {}: {}", name, e.getMessage());
+            }
         }
     }
 
+    /**
+     * Imports weather data from ilmateenistus.ee on application startup.
+     * This method is annotated with {@code @PostConstruct}, meaning it will be executed after the bean is initialized.
+     * It attempts to import weather data using the {@link #importWeatherData()} method and logs the result.
+     */
     @PostConstruct
     public void importWeatherDataOnStartup() {
         log.info("Importing weather data on application startup...");
@@ -87,7 +114,6 @@ public class WeatherService {
             log.info("Weather data imported successfully.");
         } catch (Exception e) {
             log.error("Failed to import weather data on startup: {}", e.getMessage());
-            e.printStackTrace();
         }
     }
 
