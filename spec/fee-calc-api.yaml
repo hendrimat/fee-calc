@@ -10,55 +10,36 @@ paths:
   /calculate-delivery-fee:
     post:
       operationId: calculateFee
-      summary: Calculates fee based on input parameters.
-      description: Calculates the total delivery fee or gives an error message.
+      summary: Calculate delivery fee
+      description: Calculates the total delivery fee or gives an error message based on the city, vehicle type and weather.
       parameters:
         - $ref: '#/components/parameters/City'
         - $ref: '#/components/parameters/VehicleType'
       responses:
         '200':
-          description: Successful operation.
+          description: Successful operation. Total delivery fee or error message.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Fee'
-
+                $ref: '#/components/schemas/FeeResponse'
+        '400':
+          description: Bad request. An error message explaining the issue.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 components:
   schemas:
-    Fee:
+    FeeResponse:
       type: object
       properties:
-        fee:
-          type: number
-        updatedOn:
-          type: string
-          format: date-time
-
-    City:
-      type: string
-      enum:
-        - Tallinn
-        - Tartu
-        - Pärnu
-
-    VehicleType:
-      type: string
-      enum:
-        - Car
-        - Scooter
-        - Bike
-
-    Weather:
-      type: object
-      properties:
-        id:
-          type: integer
-        airTemperature:
-          type: number
-        windSpeed:
-          type: number
-        weatherPhenomenon:
-          type: string
+        result:
+          oneOf:
+            - type: number
+            - type: string
 
   parameters:
     City:
@@ -68,6 +49,10 @@ components:
       required: true
       schema:
         type: string
+        enum:
+          - Tallinn
+          - Tartu
+          - Pärnu
     VehicleType:
       name: vehicleType
       in: query
@@ -75,3 +60,7 @@ components:
       required: true
       schema:
         type: string
+        enum:
+          - Car
+          - Scooter
+          - Bike
