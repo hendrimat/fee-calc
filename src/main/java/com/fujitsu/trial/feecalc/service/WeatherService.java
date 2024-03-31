@@ -8,6 +8,8 @@ import com.fujitsu.trial.feecalc.repository.WeatherRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -29,12 +31,20 @@ public class WeatherService {
     private final WeatherRepository weatherRepository;
     private final Map<City, String> cityToStation = Map.of(City.TALLINN, "Tallinn-Harku", City.TARTU, "Tartu-Tõravere", City.PÄRNU, "Pärnu");
 
+    @Value("${custom.cron.expression}")
+
     public Weather getWeather(City city) {
         String station = cityToStation.get(city);
         return weatherRepository.findFirstByStationOrderByTimestampDesc(station);
     }
 
-    @Scheduled(cron = "0 15 * * * *") // Runs every hour at HH:15:00
+    /**
+     * Imports weather data from ilmateenistus.ee and saves it to the database.
+     * This method is scheduled to run every hour at HH:15:00.
+     * It fetches weather data using the {@link WeatherDataFetcher} and saves it to the
+     * database using the {@link WeatherRepository}.
+     */
+    @Scheduled(cron = "${custom.cron.expression}") // DEFAULT: Runs every hour at HH:15:00
     public void importWeatherData() {
         Collection<String> stations = cityToStation.values();
 
