@@ -15,13 +15,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/City'
         - $ref: '#/components/parameters/VehicleType'
-      requestBody:
-        description: Request information.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeliveryRequest'
       responses:
         '200':
           description: Successful operation.
@@ -32,16 +25,6 @@ paths:
 
 components:
   schemas:
-    DeliveryRequest:
-      type: object
-      properties:
-        city:
-          $ref: '#/components/schemas/City'
-        vehicleType:
-          $ref: '#/components/schemas/VehicleType'
-        weather:
-          $ref: '#/components/schemas/Weather'
-
     Fee:
       type: object
       properties:
