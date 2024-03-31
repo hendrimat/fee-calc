@@ -60,6 +60,8 @@ public class FeeCalcController {
             }
             log.debug("Calculated delivery fee: {}", fee);
 
+            // For some reason the IntelliJ api try-out feature does not work, but sending the request using curl or in a browser works.
+            // It's probably related to the CORS and WebSecurityConfig.
             return ResponseEntity.ok(new FeeResponse(fee));
         } catch (RuntimeException exception) {
             log.error("Error calculating delivery fee", exception);
