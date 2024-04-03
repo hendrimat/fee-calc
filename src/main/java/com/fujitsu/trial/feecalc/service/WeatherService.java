@@ -106,7 +106,7 @@ public class WeatherService {
             if (!wmo.isBlank()) weather.setWmo(Integer.valueOf(wmo));
             if (!airTemperature.isBlank()) weather.setAirTemperature(Double.parseDouble(airTemperature));
             if (!windSpeed.isBlank()) weather.setWindSpeed(Double.parseDouble(windSpeed));
-            if (!phenomenon.isBlank()) weather.setPhenomenon(Phenomenon.valueOf(phenomenon.toUpperCase()));
+            if (!phenomenon.isBlank()) weather.setPhenomenon(Phenomenon.valueOf(phenomenon.toUpperCase().replaceAll(" ", "_")));
 
             try {
                 weatherRepository.save(weather);
